@@ -323,8 +323,8 @@ resource "aws_service_discovery_service" "frontend_discovery_service" {
 
 resource "aws_ecs_task_definition" "frontend_task_definition" {
   family                   = "frontend"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 256
+  memory                   = 512
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
@@ -430,8 +430,8 @@ resource "aws_service_discovery_service" "producer_discovery_service" {
 
 resource "aws_ecs_task_definition" "producer_task_definition" {
   family                   = "producer"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 256
+  memory                   = 512
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
@@ -521,8 +521,8 @@ resource "aws_service_discovery_service" "consumer_discovery_service" {
 
 resource "aws_ecs_task_definition" "consumer_task_definition" {
   family                   = "consumer"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 256
+  memory                   = 512
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
@@ -612,8 +612,8 @@ resource "aws_service_discovery_service" "stock_discovery_service" {
 
 resource "aws_ecs_task_definition" "stock_task_definition" {
   family                   = "stock"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 256
+  memory                   = 512
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
