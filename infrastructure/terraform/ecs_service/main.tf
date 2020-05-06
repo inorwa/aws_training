@@ -16,7 +16,7 @@ resource "aws_service_discovery_service" "discovery_service" {
 }
 
 resource "aws_ecs_task_definition" "task_definition" {
-  family                   = var.family
+  family                   = var.task_definition_family
   cpu                      = 256
   memory                   = 512
   network_mode             = "awsvpc"
@@ -29,7 +29,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 [
   {
     "name": "${var.container_name}",
-    "image": "${var.image}",
+    "image": "${var.docker_image}",
     "portMappings": [
       {
         "containerPort": ${var.container_port},
@@ -46,19 +46,19 @@ resource "aws_ecs_task_definition" "task_definition" {
       "options": {
         "awslogs-group": "${var.log_group_id}",
         "awslogs-region": "${var.region}",
-        "awslogs-stream-prefix": "stock"
+        "awslogs-stream-prefix": "${var.log_prefix}"
       }
     },
     "mountPoints": [],
     "volumesFrom": [],
-    "environment": ${var.environment}
+    "environment": ${var.environment_variables}
   }
 ]
   TASK_DEFINITION
 }
 
 resource "aws_ecs_service" "service" {
-  depends_on = var.depends_on
+  depends_on = [var.service_depends_on]
 
   name                = var.service_name
   cluster             = var.cluster_arn
@@ -75,16 +75,15 @@ resource "aws_ecs_service" "service" {
   }
 
   service_registries {
-    registry_arn = aws_service_discovery_service.stock_discovery_service.arn
+    registry_arn = aws_service_discovery_service.discovery_service.arn
   }
 
   dynamic "load_balancer" {
-    for_each = var.load_balancer
-
+    for_each = var.load_balancers
     content {
-      target_group_arn = load_balancer.frontend_target_group_arn
-      container_port   = load_balancer.container_port
-      container_name   = load_balancer.container_name
+      target_group_arn = load_balancer.value["target_group_arn"]
+      container_port   = load_balancer.value["container_port"]
+      container_name   = load_balancer.value["container_name"]
     }
   }
 }

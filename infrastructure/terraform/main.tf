@@ -303,384 +303,153 @@ resource "aws_ecs_cluster" "cluster" {
   tags = local.tags
 }
 
-//frontend
-resource "aws_service_discovery_service" "frontend_discovery_service" {
-  name = "frontend"
+module "frontend" {
+  source = "./ecs_service"
 
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
-
-    dns_records {
-      ttl  = 60
-      type = "A"
-    }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-}
-
-resource "aws_ecs_task_definition" "frontend_task_definition" {
-  family                   = "frontend"
-  cpu                      = 256
-  memory                   = 512
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  tags                     = local.tags
-
-  container_definitions    = <<TASK_DEFINITION
+  service_discovery_name      = "frontend"
+  service_discovery_dns_id    = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
+  task_definition_family      = "frontend"
+  ecs_task_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  tags                        = local.tags
+  container_name              = "frontend"
+  docker_image                = "docker.pkg.github.com/mpetla/aws_training/frontend:latest"
+  container_port              = 3000
+  host_port                   = 3000
+  artifactory_secret_arn      = aws_secretsmanager_secret.artifactory_secret.arn
+  log_group_id                = aws_cloudwatch_log_group.log_group.id
+  region                      = local.region
+  log_prefix                  = "frontend"
+  environment_variables       = <<ENVIRONMENT_VARIABLES
 [
-  {
-    "name": "frontend",
-    "image": "docker.pkg.github.com/mpetla/aws_training/frontend:latest",
-    "portMappings": [
-      {
-        "containerPort": 3000,
-        "protocol": "tcp",
-        "hostPort": 3000
-      }
-    ],
-    "repositoryCredentials": {
-      "credentialsParameter": "${aws_secretsmanager_secret.artifactory_secret.arn}"
-    },
-    "essential": true,
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.log_group.id}",
-        "awslogs-region": "${local.region}",
-        "awslogs-stream-prefix": "frontend"
-      }
-    },
-    "cpu": 1,
-    "mountPoints": [],
-    "volumesFrom": [],
-    "environment": [
-      {
-        "name": "PRODUCER_API",
-        "value": "http://producer.training:3001"
-      },
-      {
-        "name": "CONSUMER_API",
-        "value": "http://consumer.training:3002"
-      },
-      {
-        "name": "STOCK_API",
-        "value": "http://stock.training:3003"
-      }
-    ]
-  }
+  { "name": "PRODUCER_API", "value": "http://producer.training:3001" },
+  { "name": "CONSUMER_API", "value": "http://consumer.training:3002" },
+  { "name": "STOCK_API",    "value": "http://stock.training:3003" }
 ]
-  TASK_DEFINITION
-}
+ENVIRONMENT_VARIABLES
+  service_depends_on          = aws_alb_listener.listener
+  service_name                = "frontend"
+  cluster_arn                 = aws_ecs_cluster.cluster.arn
+  subnets                     = [
+    aws_subnet.private_subnet_az1a.id,
+    aws_subnet.private_subnet_az1b.id
+  ]
+  security_groups             = [
+    aws_security_group.cluster_security_group.id
+  ]
+  assign_public_ip            = true
 
-resource "aws_ecs_service" "frontend_service" {
-  depends_on = [aws_alb_listener.listener]
-
-  name                = "frontend"
-  cluster             = aws_ecs_cluster.cluster.arn
-  task_definition     = aws_ecs_task_definition.frontend_task_definition.arn
-  launch_type         = "FARGATE"
-  platform_version    = "LATEST"
-  desired_count       = 1
-  scheduling_strategy = "REPLICA"
-
-  network_configuration {
-    subnets = [
-      aws_subnet.public_subnet_az1a.id,
-      aws_subnet.public_subnet_az1b.id
-    ]
-    security_groups = [
-      aws_security_group.cluster_security_group.id
-    ]
-    assign_public_ip = true
-  }
-
-  service_registries {
-    registry_arn = aws_service_discovery_service.frontend_discovery_service.arn
-  }
-
-  load_balancer {
-    target_group_arn = aws_alb_target_group.frontend_target_group.arn
-    container_port   = 3000
-    container_name   = "frontend"
-  }
-}
-
-//producer
-resource "aws_service_discovery_service" "producer_discovery_service" {
-  name = "producer"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
-
-    dns_records {
-      ttl  = 60
-      type = "A"
+  load_balancers = [
+    {
+      target_group_arn = aws_alb_target_group.frontend_target_group.arn
+      container_port   = 3000
+      container_name   = "frontend"
     }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
+  ]
 }
 
-resource "aws_ecs_task_definition" "producer_task_definition" {
-  family                   = "producer"
-  cpu                      = 256
-  memory                   = 512
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  tags                     = local.tags
+module "producer" {
+  source = "./ecs_service"
 
-  container_definitions    = <<TASK_DEFINITION
+  service_discovery_name      = "producer"
+  service_discovery_dns_id    = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
+  task_definition_family      = "producer"
+  ecs_task_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  tags                        = local.tags
+  container_name              = "producer"
+  docker_image                = "docker.pkg.github.com/mpetla/aws_training/producer:latest"
+  container_port              = 3001
+  host_port                   = 3001
+  artifactory_secret_arn      = aws_secretsmanager_secret.artifactory_secret.arn
+  log_group_id                = aws_cloudwatch_log_group.log_group.id
+  region                      = local.region
+  log_prefix                  = "producer"
+  environment_variables       = <<ENVIRONMENT_VARIABLES
 [
-  {
-    "name": "producer",
-    "image": "docker.pkg.github.com/mpetla/aws_training/producer:latest",
-    "portMappings": [
-      {
-        "containerPort": 3001,
-        "protocol": "tcp",
-        "hostPort": 3001
-      }
-    ],
-    "repositoryCredentials": {
-      "credentialsParameter": "${aws_secretsmanager_secret.artifactory_secret.arn}"
-    },
-    "essential": true,
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.log_group.id}",
-        "awslogs-region": "${local.region}",
-        "awslogs-stream-prefix": "producer"
-      }
-    },
-    "cpu": 1,
-    "mountPoints": [],
-    "volumesFrom": [],
-    "environment": [
-      {
-        "name": "STOCK_HOST",
-        "value": "http://stock.training:3003"
-      }
-    ]
-  }
+  { "name": "STOCK_HOST", "value": "http://stock.training:3003" }
 ]
-  TASK_DEFINITION
+ENVIRONMENT_VARIABLES
+  service_depends_on          = null
+  service_name                = "producer"
+  cluster_arn                 = aws_ecs_cluster.cluster.arn
+  subnets                     = [
+    aws_subnet.private_subnet_az1a.id,
+    aws_subnet.private_subnet_az1b.id
+  ]
+  security_groups             = [
+    aws_security_group.cluster_security_group.id
+  ]
+  assign_public_ip            = false
+  load_balancers              = []
 }
 
-resource "aws_ecs_service" "producer_service" {
-  name                = "producer"
-  cluster             = aws_ecs_cluster.cluster.arn
-  task_definition     = aws_ecs_task_definition.producer_task_definition.arn
-  launch_type         = "FARGATE"
-  platform_version    = "LATEST"
-  desired_count       = 1
-  scheduling_strategy = "REPLICA"
+module "consumer" {
+  source = "./ecs_service"
 
-  network_configuration {
-    subnets = [
-      aws_subnet.private_subnet_az1a.id,
-      aws_subnet.private_subnet_az1b.id
-    ]
-    security_groups = [
-      aws_security_group.cluster_security_group.id
-    ]
-    assign_public_ip = false
-  }
-
-  service_registries {
-    registry_arn = aws_service_discovery_service.producer_discovery_service.arn
-  }
-}
-
-//consumer
-resource "aws_service_discovery_service" "consumer_discovery_service" {
-  name = "consumer"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
-
-    dns_records {
-      ttl  = 60
-      type = "A"
-    }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-}
-
-resource "aws_ecs_task_definition" "consumer_task_definition" {
-  family                   = "consumer"
-  cpu                      = 256
-  memory                   = 512
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  tags                     = local.tags
-
-  container_definitions    = <<TASK_DEFINITION
+  service_discovery_name      = "consumer"
+  service_discovery_dns_id    = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
+  task_definition_family      = "consumer"
+  ecs_task_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  tags                        = local.tags
+  container_name              = "consumer"
+  docker_image                = "docker.pkg.github.com/mpetla/aws_training/consumer:latest"
+  container_port              = 3002
+  host_port                   = 3002
+  artifactory_secret_arn      = aws_secretsmanager_secret.artifactory_secret.arn
+  log_group_id                = aws_cloudwatch_log_group.log_group.id
+  region                      = local.region
+  log_prefix                  = "consumer"
+  environment_variables       = <<ENVIRONMENT_VARIABLES
 [
-  {
-    "name": "consumer",
-    "image": "docker.pkg.github.com/mpetla/aws_training/consumer:latest",
-    "portMappings": [
-      {
-        "containerPort": 3002,
-        "protocol": "tcp",
-        "hostPort": 3002
-      }
-    ],
-    "repositoryCredentials": {
-      "credentialsParameter": "${aws_secretsmanager_secret.artifactory_secret.arn}"
-    },
-    "essential": true,
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.log_group.id}",
-        "awslogs-region": "${local.region}",
-        "awslogs-stream-prefix": "consumer"
-      }
-    },
-    "cpu": 1,
-    "mountPoints": [],
-    "volumesFrom": [],
-    "environment": [
-      {
-        "name": "STOCK_HOST",
-        "value": "http://stock.training:3003"
-      }
-    ]
-  }
+  { "name": "STOCK_HOST", "value": "http://stock.training:3003" }
 ]
-  TASK_DEFINITION
+ENVIRONMENT_VARIABLES
+  service_depends_on          = null
+  service_name                = "consumer"
+  cluster_arn                 = aws_ecs_cluster.cluster.arn
+  subnets                     = [
+    aws_subnet.private_subnet_az1a.id,
+    aws_subnet.private_subnet_az1b.id
+  ]
+  security_groups             = [
+    aws_security_group.cluster_security_group.id
+  ]
+  assign_public_ip            = false
+  load_balancers              = []
 }
 
-resource "aws_ecs_service" "consumer_service" {
-  name                = "consumer"
-  cluster             = aws_ecs_cluster.cluster.arn
-  task_definition     = aws_ecs_task_definition.consumer_task_definition.arn
-  launch_type         = "FARGATE"
-  platform_version    = "LATEST"
-  desired_count       = 1
-  scheduling_strategy = "REPLICA"
+module "stock" {
+  source = "./ecs_service"
 
-  network_configuration {
-    subnets = [
-      aws_subnet.private_subnet_az1a.id,
-      aws_subnet.private_subnet_az1b.id
-    ]
-    security_groups = [
-      aws_security_group.cluster_security_group.id
-    ]
-    assign_public_ip = false
-  }
-
-  service_registries {
-    registry_arn = aws_service_discovery_service.consumer_discovery_service.arn
-  }
-}
-
-//stock
-resource "aws_service_discovery_service" "stock_discovery_service" {
-  name = "stock"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
-
-    dns_records {
-      ttl  = 60
-      type = "A"
-    }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-}
-
-resource "aws_ecs_task_definition" "stock_task_definition" {
-  family                   = "stock"
-  cpu                      = 256
-  memory                   = 512
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  tags                     = local.tags
-
-  container_definitions    = <<TASK_DEFINITION
+  service_discovery_name      = "stock"
+  service_discovery_dns_id    = aws_service_discovery_private_dns_namespace.service_discovery_dns.id
+  task_definition_family      = "stock"
+  ecs_task_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  tags                        = local.tags
+  container_name              = "stock"
+  docker_image                = "docker.pkg.github.com/mpetla/aws_training/stock:latest"
+  container_port              = 3003
+  host_port                   = 3003
+  artifactory_secret_arn      = aws_secretsmanager_secret.artifactory_secret.arn
+  log_group_id                = aws_cloudwatch_log_group.log_group.id
+  region                      = local.region
+  log_prefix                  = "stock"
+  environment_variables       = <<ENVIRONMENT_VARIABLES
 [
-  {
-    "name": "stock",
-    "image": "docker.pkg.github.com/mpetla/aws_training/stock:latest",
-    "portMappings": [
-      {
-        "containerPort": 3003,
-        "protocol": "tcp",
-        "hostPort": 3003
-      }
-    ],
-    "repositoryCredentials": {
-      "credentialsParameter": "${aws_secretsmanager_secret.artifactory_secret.arn}"
-    },
-    "essential": true,
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.log_group.id}",
-        "awslogs-region": "${local.region}",
-        "awslogs-stream-prefix": "stock"
-      }
-    },
-    "cpu": 1,
-    "mountPoints": [],
-    "volumesFrom": [],
-    "environment": [
-      {
-        "name": "MODE",
-        "value": "aws"
-      }
-    ]
-  }
+  { "name": "MODE", "value": "aws" }
 ]
-  TASK_DEFINITION
-}
-
-resource "aws_ecs_service" "stock_service" {
-  name                = "stock"
-  cluster             = aws_ecs_cluster.cluster.arn
-  task_definition     = aws_ecs_task_definition.stock_task_definition.arn
-  launch_type         = "FARGATE"
-  platform_version    = "LATEST"
-  desired_count       = 1
-  scheduling_strategy = "REPLICA"
-
-  network_configuration {
-    subnets = [
-      aws_subnet.private_subnet_az1a.id,
-      aws_subnet.private_subnet_az1b.id
-    ]
-    security_groups = [
-      aws_security_group.cluster_security_group.id
-    ]
-    assign_public_ip = false
-  }
-
-  service_registries {
-    registry_arn = aws_service_discovery_service.stock_discovery_service.arn
-  }
+ENVIRONMENT_VARIABLES
+  service_depends_on          = null
+  service_name                = "stock"
+  cluster_arn                 = aws_ecs_cluster.cluster.arn
+  subnets                     = [
+    aws_subnet.private_subnet_az1a.id,
+    aws_subnet.private_subnet_az1b.id
+  ]
+  security_groups             = [
+    aws_security_group.cluster_security_group.id
+  ]
+  assign_public_ip            = false
+  load_balancers              = []
 }
 
 //dynamodb

@@ -54,6 +54,8 @@ export AWS_DEFAULT_REGION=aws region
   - docker_build.sh
   
   - aws_configure.sh
+
+  - infrastructure/terraform/export_variables.sh
   
   with proper values
     
