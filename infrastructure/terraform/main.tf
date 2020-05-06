@@ -201,7 +201,7 @@ resource "aws_alb_target_group" "frontend_target_group" {
   tags        = local.tags
 
   health_check {
-    interval            = 60
+    interval            = 300
     path                = "/"
     protocol            = "HTTP"
     timeout             = 5
