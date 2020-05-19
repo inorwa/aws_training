@@ -22,7 +22,10 @@ https://docs.docker.com/docker-for-windows/install/
 
 https://docs.docker.com/docker-for-mac/install/
 
-- create aws_configure.sh in main folder
+- clone repository to local computer
+  - git clone 
+
+- create aws_configure.sh in main folder (where this README.md file exists)
 
 ```
 #!/usr/bin/env bash
@@ -51,7 +54,7 @@ export AWS_DEFAULT_REGION=aws region
 
 - update scripts:
 
-  - docker_build.sh
+  - docker_build.sh - update GITHUB_USER and GITHUB_OWNER with own account user and owner
   
   - aws_configure.sh
   
