@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-GITHUB_USER=mpetla@gmail.com
-GITHUB_OWNER=mpetla
-GITHUB_REPOSITORY=aws_training
+GITHUB_USER=
+GITHUB_OWNER=
+GITHUB_REPOSITORY=
 
 cat ~/TOKEN.txt | docker login docker.pkg.github.com -u $GITHUB_USER --password-stdin
 

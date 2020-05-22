@@ -4,28 +4,31 @@
 
 https://aws.amazon.com/resources/create-account/
 
-- install AWS CLI
+- AWS CLI
 
 https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html
 
 https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html
 
-- install terraform CLI
+- terraform CLI
 
 https://www.terraform.io/downloads.html
 
 Terraform is distributed as a single binary. Install Terraform by unzipping it and moving it to a directory included in your system's PATH .
 
-- install Docker
+- Docker (step is optional for training with Docker)
 
 https://docs.docker.com/docker-for-windows/install/
 
 https://docs.docker.com/docker-for-mac/install/
 
+- Configuration
+
 - clone repository to local computer
   - git clone 
 
 - create aws_configure.sh in main folder (where this README.md file exists)
+  please do not enter values, creds will be available after IAM introduction and creation of user in IAM
 
 ```
 #!/usr/bin/env bash
@@ -52,11 +55,7 @@ export AWS_DEFAULT_REGION=aws region
      
     write token to file, for example ~/TOKEN.txt (if it is different - update docker_build.sh script)
 
-- update scripts:
+- fork repository in github (step is optional for training with Docker)
 
-  - docker_build.sh - update GITHUB_USER and GITHUB_OWNER with own account user and owner
-  
-  - aws_configure.sh
-  
-  with proper values
+- update scripts docker_build.sh - update GITHUB_USER, GITHUB_OWNER and GITHUB_REPOSITORY (step is optional for training with Docker)
     

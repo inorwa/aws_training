@@ -1,4 +1,4 @@
-Lesson 1
+AWS Basics, IAM, VPC, EC2
 
 Topics:
 - AWS Basics
@@ -10,7 +10,6 @@ What you will learn:
 - how to create user and specific roles,
 - how to login to console and cli,
 - understand roles and policies, user security options
-- how to setup and login into basic compute
 
 IAM and security:
 1)  Create user training
@@ -20,30 +19,25 @@ IAM and security:
 5)  Review user security options
 
 Networking:
-1)  Create VPC - 10.0.0.0/27 - 32 hosts
+1)  Create VPC - 10.0.0.0/16
 2)  Create internet gateway
-3)  Create NAT gateway
-4)  Create public route table, 10.0.0.0/27, internet gateway
-5)  Create private route table, 10.0.0.0/27, NAT gateway
-6)  Create public subnet - 10.0.0.0/28 - 16 hosts
-7)  Create private subnet - 10.0.0.16/28 - 16 hosts
-8)  Create key pair
-9)  Create EC2 instance in public subnet (public IP)
-10) Create EC2 instance in private subnet (public IP)
-11) SSH into public and private EC2
-12) Change private route table, remove NAT, insert internet gateway
-13) SSH into private EC2
-14) Remove EC2 instances
-15) Remove NAT gateway
-16) Remove VPC
+3)  Create public subnet - 10.0.0.0/28 - 11 hosts
+4)  Create private subnet - 10.1.0.0/28 - 11 hosts
+5)  Create public route table
+6)  Create private route table
+7)  Create key pair
+8)  Create EC2 instance in public subnet (public IP), security group
+9)  Create EC2 instance in private subnet (private IP), security group
+10) SSH into public and private EC2
+11) Change security groups setting, change route tables
+12) Curl internet available service
 
-Lesson 2
+Infrastructure as code, building applications
 
 Topics:
-- Amazon Elastic Compute Cloud (EC2)
 - AWS Lambda, Amazon Elastic Container Service (ECS), Amazon EKS
 - Infrastructure as code, (CloudFormation, Terraform, CLI, SDK)
-- example project
+- project
 
 What you will learn:
 - how to setup environment with CloudFormation
@@ -59,13 +53,12 @@ Infrastructure as code
 2) Review CloudFormation, CDK
 3) Review Terraform
 
-Example project with infrastructure in terraform:
+Project with infrastructure in terraform:
 - vpc
 - two subnets (public, private)
 - alb, routing
-- s3 (static frontend?)
-- dynamodb
 - fargate (cluster, task definition, service)
+- dynamodb
 
 https://devcloud.swcoe.ge.com/devspace/display/~212626796/AWS+Training
 

@@ -82,14 +82,13 @@ Infrastructure As Code
 - SDK - https://aws.amazon.com/sdk-for-node-js/
 
 Project:
-	- web app
-		- S3 hosted frontend (vue)
-		- EC2 hosted backend (node)
-		- storage to store data
-		- cognito
-		- producer, stock, consumer
+	- ECS Fargate application
+	- storage to store data
+	- frontend, producer, stock, consumer
 		
 -------------------------------------------------------------------------------
+EC2
+
 How to install nodejs on EC2 amazon linux
 sudo yum install -y gcc-c++ make
 curl -sL https://rpm.nodesource.com/setup_12.x | sudo -E bash -
@@ -98,6 +97,8 @@ sudo yum install -y nodejs
 Key pair must exists (cannot be created by CF or TF)
 
 -------------------------------------------------------------------------------
+Docker
+
 Delete all docker things
 docker system prune -a
 
@@ -106,6 +107,8 @@ docker run -d -p 3000:3000 docker.pkg.github.com/mpetla/aws_training/frontend:la
 docker exec frontend -it /ash
 
 -------------------------------------------------------------------------------
+Github
+
 Github as Docker repository
 
 cat ~/TOKEN.txt | docker login docker.pkg.github.com -u mpetla@gmail.com --password-stdin
@@ -115,6 +118,7 @@ docker push docker.pkg.github.com/mpetla/aws_training/frontend:latest
 docker pull docker.pkg.github.com/mpetla/aws_training/frontend:latest
 
 -------------------------------------------------------------------------------
+Terraform
 
 terraform init
 terraform validate
