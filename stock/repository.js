@@ -1,4 +1,5 @@
 const mode = process.env.MODE || 'local';
+const aws_region = process.env.REGION || 'eu-central-1';
 
 const createLocalDb = () => {
   console.log('Using local db');
@@ -16,11 +17,11 @@ const createLocalDb = () => {
   }
 }
 
-const createDynamoDb = () => {
+const createDynamoDb = (region) => {
   console.log('Using dynamoDB');
 
   const AWS = require('aws-sdk');
-  AWS.config.update({region: 'eu-central-1'});
+  AWS.config.update({region});
   const documentClient = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
 
   return {
@@ -53,14 +54,14 @@ const createDynamoDb = () => {
   }
 }
 
-const createDb = (mode) => {
+const createDb = (mode, region) => {
   switch (mode) {
-    case 'aws': return createDynamoDb(); break;
+    case 'aws': return createDynamoDb(region); break;
     default: return createLocalDb();
   }
 }
 
-const db = createDb(mode);
+const db = createDb(mode, aws_region);
 
 const save = (stock) => {
   return db.save(stock);
