@@ -5,21 +5,37 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PRODUCER_API=http://producer:3001
+      - CONSUMER_API=http://consumer:3002
+      - STOCK_API=http://stock:3003
 
   producer:
     image: docker.pkg.github.com/mpetla/aws_training/producer:latest
     build:
       context: ./producer
       dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - STOCK_HOST=http://stock:3003
 
   consumer:
     image: docker.pkg.github.com/mpetla/aws_training/consumer:latest
     build:
       context: ./consumer
       dockerfile: Dockerfile
+    ports:
+      - "3002:3002"     
+    environment:
+      - STOCK_HOST=http://stock:3003
 
   stock:
     image: docker.pkg.github.com/mpetla/aws_training/stock:latest
     build:
       context: ./stock
       dockerfile: Dockerfile
+    ports:
+      - "3003:3003"   
