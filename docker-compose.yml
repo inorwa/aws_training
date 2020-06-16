@@ -28,7 +28,7 @@ services:
       context: ./consumer
       dockerfile: Dockerfile
     ports:
-      - "3002:3002"     
+      - "3002:3002"
     environment:
       - STOCK_HOST=http://stock:3003
 

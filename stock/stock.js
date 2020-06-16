@@ -1,31 +1,27 @@
 const repository = require('./repository');
-let stock = 0;
-
-const init = () => {
-  repository.read()
-    .then((result) => { stock = result })
-    .catch(console.log)
-}
 
 const takeOne = () => {
-  if (stock > 0) {
-    stock--;
-    return repository.save(stock).then(true);
-  }
+  return repository.read().then((stock) => {
+    let currentStockValue = parseInt(stock);
+    if (currentStockValue > 0) {
+      const stockMinusOne = currentStockValue - 1;
+      return repository.save(stockMinusOne).then(true);
+    }
 
-  return Promise.resolve(false);
+    return Promise.resolve(false);
+  })
 }
 
 const addOne = () => {
-  stock++;
-  return repository.save(stock);
+  return repository.read().then((stock) => {
+    let stockPlusOne = parseInt(stock) + 1;
+    return repository.save(stockPlusOne);
+  })
 }
 
 const currentValue = () => {
   return repository.read();
 }
-
-init();
 
 module.exports = {
   takeOne,
